@@ -4,5 +4,7 @@
     "@uwu/shelter-defs": "^1.4.1"
   },
   "type": "module",
-  "workspaces": ["plugins/*"]
+  "workspaces": [
+    "plugins/*"
+  ]
 }
