@@ -1,29 +1,24 @@
 const { flux: { subscribe }, observeDom, patcher } = shelter.plugin.scoped
 const { getFiber, reactFiberWalker } = shelter.util
 
-let unobserveGifPickerResults
-let closeExpressionPicker
-
 export function onLoad() {
-  closeExpressionPicker = findByExportedFunctionBodyContains(".setState({activeView:null")[1]
+  const closeExpressionPicker = findByExportedFunctionBodyContains(".setState({activeView:null")[1]
 
   subscribe("GIF_PICKER_INITIALIZE", () => {
     const textBox = reactFiberWalker(getFiber(document.querySelector('[class^="channelTextArea_"] [class^="textArea_"]')), 'onPaste', true).pendingProps.ref.current
 
-    unobserveGifPickerResults = observeDom('#gif-picker-tab-panel [class^="results_"] [class^="result_"]:not([data-gifpaste-modded])', elem => {
-      elem.dataset.gifpasteModded = true
-
+    const unobserve = observeDom('#gif-picker-tab-panel > [class^="content_"]', elem => {
       const selectionHandler = reactFiberWalker(getFiber(elem), 'onSelectGIF', true)
-      patcher.instead('onSelectGIF', selectionHandler.pendingProps, ([{ url }]) => {
+      const doSelectGIF = ([{ url }]) => {
         textBox.insertText(url)
+        textBox.focus()
         closeExpressionPicker()
-      })
+      }
+      patcher.instead('onSelectGIF', selectionHandler.pendingProps, doSelectGIF)
+      patcher.instead('onSelectGIF', selectionHandler.return.pendingProps, doSelectGIF)
+      unobserve()
     })
   })
-
-  subscribe("GIF_PICKER_QUERY", () => setTimeout(() => {
-    if(!document.querySelector('#gif-picker-tab-panel')) unobserveGifPickerResults?.()
-  }))
 }
 
 /* webpack jank */
